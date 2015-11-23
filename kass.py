@@ -8,6 +8,7 @@ class ProgramInfo:
 	script_name = str(sys.argv[0])
 	fullPath = act_folder + '/' + script_name
 	dbPath = act_folder + '/kass.db'
+	populatorPath = act_folder + '/populator.py'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -234,7 +235,92 @@ def create_database():
 		sys.exit(0)
 
 
+def extractData(table):
+	c = conn.cursor()
+	people_db_columns = ['NOME','NASCIMENTO','CPF','RG','ENDERECO','EMAIL','TELEFONE', 'CELULAR']
+	c.execute("SELECT * FROM " + str(table))
+	content = c.fetchall()
+	return content
 
+def removeUnformatted(string):
+	string = str(string)
+	characters = ["u'","(",")","'",","]
+	for i in characters:
+		string.replace(i,'')
+	return string
+
+def remove(LIST):
+	newList = []
+	for table in LIST:
+		table = str(table)
+
+		table = table.replace("(","")
+		table = table.replace(")","")
+		table = table.replace("u'",'')
+		table = table.replace(',','')
+		table = table.replace("'",'')
+		if(table <> 'sqlite_sequence'):
+			newList.append(table)
+	return newList
+
+
+def classifyData(data,targetTable,sourceTable,sourceColumn):
+	
+	for i in data:
+		columns = []
+		info = []
+		i = str(i)
+		eachList = i.split(':')
+		for each in eachList:
+			if((eachList.index(each) % 2 )== 1):
+				if(eachList.index <> 0 ):
+					columns.append(each)
+			else:
+				info.append(each)
+		#return columns, info
+		infoString = ''
+		columnString = ''
+		for information in info:
+			infoString+= "'" + information + "'" +  ','
+		infoString = infoString[5:-4]
+		infoString = str(infoString)
+		#print infoString
+
+		for column in columns:
+			columnString+= column + ','
+		columnString = columnString[:-1]
+		columnString = str(columnString)
+		#print columnString
+
+		try:
+			c = conn.cursor()
+			c.execute("SELECT * FROM " + str(targetTable) + " WHERE " + str(columns[0]) + "=" + "'" + str(info[1]) + "'")
+			exist = c.fetchone()
+			if(exist == None):
+				c.execute("INSERT INTO " + str(targetTable) + " (" + str(columnString) + ") " + " VALUES (" + str(infoString) + ")")
+
+				print "Values %s added to table %s." % (infoString, targetTable)
+				#print "DELETE FROM " + str(sourceTable) + " WHERE " + str(sourceColumn) + "=" + "'" + str(info[1]) + "'"
+				c.execute("DELETE FROM " + str(sourceTable) + " WHERE " + str(sourceColumn) + " LIKE " + "'%" + str(info[1]) + "%'")
+				c.execute("DELETE FROM " + str(sourceTable) + " WHERE " + str(sourceColumn) + " LIKE " + "'%" + str(info[2]) + "%'")
+			if(exist[0] == str(info[1])):
+				if(targetTable == 'people'):
+					updateString = ''
+					i = 0
+					while(i < len(columns)):
+						updateString += str(columns[i]) + "='" + str(info[i+1]) + "',"
+						i+=1
+					updateString = updateString[:-4]
+					print updateString
+					c.execute("UPDATE " + str(targetTable) + " SET "+str(updateString)+" WHERE " + str(columns[0]) + "='" + str(info[1]) + "'")
+					print 'Values %s updated from table %s' % (updateString, targetTable)
+					#print "DELETE FROM " + str(sourceTable) + " WHERE " + str(sourceColumn) + "=" + "'" + str(info[1]) + "'"
+					c.execute("DELETE FROM " + str(sourceTable) + " WHERE " + str(sourceColumn) + " LIKE " + "'%" + str(info[1]) + "%'")
+					c.execute("DELETE FROM " + str(sourceTable) + " WHERE " + str(sourceColumn) + " LIKE " + "'%" + str(info[2][:-3]) + "%'")
+					print 'Source Table cleansed.'
+		except Exception as e:
+			#print 'SOURCE TABLE:' + str(sourceTable) + '\nTARGET TABLE:' + str(targetTable) + '\nSource Column:' + str(sourceColumn) + '\nError:' + str(e) + '\n'
+			pass
 
 	
 
@@ -281,6 +367,29 @@ def interpreter(string):
 			c.execute("INSERT INTO KNOWLEDGE VALUES (" + "'" + str(wisdom) + "'" + ")")
 			conn.commit()
 			#Kass.talk(sucess)
+	if(string[0:len('clean')] == 'clean'):
+		UND = True
+		c = conn.cursor()
+		try:
+			c.execute('DROP TABLE KNOWLEDGE')
+			c.execute('CREATE TABLE KNOWLEDGE (wisdom)')
+			Kass.talk('Tabela de transição de dados limpa.')
+			conn.commit()
+		except Exception as e:
+			errorString = 'Ocorreu um erro: ' + str(e)
+			Kass.talk(errorString)
+	if(string[0:len('populate')] == 'populate'):
+		UND = True
+		import subprocess
+		data = extractData('KNOWLEDGE')
+		c = conn.cursor()
+		c.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
+		tableList = c.fetchall()
+		formattedTableList = remove(tableList)
+		#print formattedTableList
+		for table in formattedTableList:
+			classifyData(data,table,'KNOWLEDGE','wisdom')
+		conn.commit()
 	if(string[0:len('console')] == 'console'):
 		UND = True
 		c = conn.cursor()
