@@ -3,7 +3,7 @@ import sqlite3, os, sys, random
 debug_mode = True
 class ProgramInfo:
 	name = 'Kass Data Center'
-	version = '0.1'
+	version = '0.1.1'
 	act_folder = str(os.path.dirname(sys.argv[0]))
 	script_name = str(sys.argv[0])
 	fullPath = act_folder + '/' + script_name
@@ -109,6 +109,20 @@ def ListAllTables():
 	formattedTableList = remove(tableList)
 	print formattedTableList
 
+
+def listDatabaseInformation():
+	c = conn.cursor()
+	c.execute('''SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;''')
+	tableList = c.fetchall()
+	formattedTableList = remove(tableList)
+	index = 1
+	for command in formattedTableList:
+		c.execute("SELECT sql FROM sqlite_master WHERE tbl_name = " + "'" + str(command) + "'" + " AND type='table'")
+		result = c.fetchall()
+		result = str(result)
+		result = result[len('[("CREATE TABLE ' + str(command) + ' '):-4]
+		print str(index) + '. ' '[' + str(command) + ']' + '  ' + str(result) + '\n'
+		index+=1
 
 def act(action,tString):
 	try:
@@ -237,7 +251,6 @@ def create_database():
 
 def extractData(table):
 	c = conn.cursor()
-	people_db_columns = ['NOME','NASCIMENTO','CPF','RG','ENDERECO','EMAIL','TELEFONE', 'CELULAR']
 	c.execute("SELECT * FROM " + str(table))
 	content = c.fetchall()
 	return content
@@ -330,12 +343,9 @@ def init():
 	global conn
 	Critical = False
 	#database exists?
-	#Kass.talk('Trying to find my database...')
 	if os.path.isfile(SQL.db_name):
-		#Kass.talk('Database found.')
 		conn = sqlite3.connect(ProgramInfo.dbPath)
 		conn.text_factory = str
-		#Kass.talk('I have successfully connected to the database.')
 	else:
 		Kass.talk("Eu não encontrei o banco de dados!")
 		if(create_database() == True):
@@ -402,11 +412,13 @@ def interpreter(string):
 		string = 'Iniciando console SQL para o Operador...'
 		Kass.talk(string)
 		try:
-			while console == True:
+			sqlConsole = ''
+			while (sqlConsole <> 'QUIT'):
 				sqlConsole = raw_input('\n	sql> ')
-				if(sqlConsole == 'quit'):
-					console == False
-				else:
+				sqlConsole = str(sqlConsole).upper()
+				
+				#Se nao for quit, executa o comando
+				if sqlConsole <> 'QUIT':
 					string = 'Executando comando "' + str(sqlConsole) + '"...'
 					Kass.talk(string)
 					c.execute(sqlConsole)
@@ -418,35 +430,8 @@ def interpreter(string):
 	for i in listarTables:
 		if(string[0:len(i)] == str(i)):
 			UND = True
-			ListAllTables()
-
-
-	listarColunas = ['listar colunas','mostrar colunas','todas as colunas']
-	for i in listarColunas:
-		if(string[0:len(i)] == str(i)):
-			UND = True
-			try:
-				c = conn.cursor()
-				talkOptions_02 = i + ' de qual tabela?'
-				Kass.talk(talkOptions_02)
-				command = raw_input('\nOperator: ')
-				c.execute("SELECT sql FROM sqlite_master WHERE tbl_name = " + "'" + str(command) + "'" + " AND type='table'")
-				result = c.fetchall()
-				result = str(result)
-				result = result[len('[("CREATE TABLE ' + str(command) + ' '):-4]
-				Kass.talk(result)
-			except Exception as e:
-				talkOptions_03 = 'Ocorreu um erro e não foi possível completar o procedimento.'
-				if(debug_mode == True):
-					print e
-				Kass.talk(talkOptions_03)
-				pass
-	
-	
-
-	
-		
-	
+			#ListAllTables()
+			listDatabaseInformation()
 	else:
 		if UND == False:
 			result, tString = analyze(string)
