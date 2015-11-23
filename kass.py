@@ -193,6 +193,51 @@ def act(action,tString):
 	except KeyboardInterrupt:
 		question()
 
+def create_database():
+	global conn
+	user_input = raw_input('Kass: Deseja criar um novo banco de dados? \n Operador: ')
+	words_positive = ['sim','afirmativo','quero','criar','novo','certeza']
+	words_negative = ['nao','não','negativo','cancelar','abortar']
+	user_input = str(user_input).lower()
+	user_words = user_input.split()
+	for i in user_words:
+		i = i.strip()
+	yes = 0
+	no = 0
+
+
+	#relacionamento de dados
+	for u_word in user_words:
+		for word in words_negative:
+			if(u_word == word):
+				no+=1
+		for word in words_positive:
+			if(u_word == word):
+				yes+=1
+
+
+	#analise do resultado
+	if(yes > no):
+		if not os.path.isfile(SQL.db_name):
+			conn = sqlite3.connect(ProgramInfo.dbPath)
+			conn.text_factory = str
+			Kass.talk('Banco de dados criado!')
+			return True
+		else:
+			Kass.talk('Banco de dados já existe!')
+			return False
+	elif(yes == no):
+		Kass.talk("Você me deixou confusa... Tenta de novo, ok?")
+		sys.exit(0)
+	else:
+		Kass.talk("Não quer banco de dados? Abortar...")
+		sys.exit(0)
+
+
+
+
+	
+
 
 
 def init():
@@ -207,15 +252,17 @@ def init():
 		#Kass.talk('I have successfully connected to the database.')
 	else:
 		Kass.talk("Eu não encontrei o banco de dados!")
-		Critical = True
+		if(create_database() == True):
+			Critical = False
+		else:
+			Critical = True
 
 	#end_of_init
 	if Critical == True:
 		Kass.talk('Erro crítico na inicialização. Abortando...')
 		sys.exit(0)
 
-def add_to_db(string):
-	print 'none'
+
 
 def interpreter(string):
 	UND = False
@@ -294,7 +341,7 @@ def question():
 			if(os.name == 'posix'):
 				os.system('clear')
 			print ProgramInfo.banner
-			command = raw_input('\n Operator: ')
+			command = raw_input('\n Operador: ')
 			command = command.lower()
 			interpreter(command)
 			pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...')
@@ -302,7 +349,7 @@ def question():
 def main():
 	try:
 		if(str(os.name) == 'nt'):
-			os.system('''path = %path%;C:\\WINDOWS\\SYSTEM32''')
+			os.system('set path = %\path%;C:\\python27')
 			os.system('chcp 1252 > nul')
 	except Exception as e:
 		#debug
