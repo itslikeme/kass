@@ -85,7 +85,12 @@ class Database:
 			result = c.fetchall()
 			result = str(result)
 			result = result[len('[("CREATE TABLE ' + str(command) + ' '):-4]
-			print str(index) + '. ' '[' + str(command) + ']' + '  ' + str(result) + '\n'
+			c.execute("SELECT Count(*) FROM " + str(command))
+			number = c.fetchall()
+			number = str(number)[2:-3]
+			daString = str(index) + '. ' '[' + str(command) + ']:[' + str(number) + ']  ' + str(result) + '\n'
+			daString = daString.strip('"')
+			print daString
 			index+=1
 
 	@staticmethod
@@ -377,6 +382,24 @@ class Interpreter:
 			for table in formattedTableList:
 				Interpreter.populate(data,table,'KNOWLEDGE','wisdom')
 			conn.commit()
+
+		#EXECUTAR CONSOLE COMMAND PROMPT
+		if(string[0:len('cmd')] == 'cmd'):
+			UND = True
+			talkOptions_03 = 'Iniciando console command prompt...'
+			Kass.talk(talkOptions_03)
+			try:
+				cmdConsole = ''
+				while(cmdConsole <> 'QUIT'):
+					cmdConsole = raw_input('\n 	CMD>')
+					if cmdConsole <> 'QUIT':
+						import subprocess
+						cmdCommand = subprocess.check_output(str(cmdConsole),shell=True)
+						talkOptions_02 = 'Executando ' + str(cmdCommand) + '...'
+						Kass.talk(talkOptions_02)
+						print cmdCommand
+			except:
+				pass
 
 		#COMANDO SQL PARA ABRIR O CONSOLE SQL
 		if(string[0:len('sql')] == 'sql'):
