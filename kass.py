@@ -367,7 +367,10 @@ def clean():
 def interpreter(string):
 	UND = False
 
+	#DETECTA SE O QUOTE FOI UTILIZADO
 	if(string[0:1] == '"'):
+
+		#DETECTA SE O ULTIMO CHAR TAMBEM é QUOTE (OU SEJA, INSERCAO NO BANCO DE DADOS)
 		if(string[len(string)-1:]=='"'):
 			UND = True
 			KassMessage = 'Vou adicionar ' + str(string.upper()) + ' para o meu banco de dados...'
@@ -380,7 +383,8 @@ def interpreter(string):
 			wisdom = wisdom.upper()
 			c.execute("INSERT INTO KNOWLEDGE VALUES (" + "'" + str(wisdom) + "'" + ")")
 			conn.commit()
-			#Kass.talk(sucess)
+
+	#COMANDO CLEAN PARA LIMPAR A TABELA DE TRANSIÇÃO
 	if(string[0:len('clean')] == 'clean'):
 		UND = True
 		c = conn.cursor()
@@ -392,6 +396,8 @@ def interpreter(string):
 		except Exception as e:
 			errorString = 'Ocorreu um erro: ' + str(e)
 			Kass.talk(errorString)
+
+	#COMANDO POPULATE PARA CLASSIFICAÇÃO DE DADOS NAS TABELAS DO BANCO DE DADOS
 	if(string[0:len('populate')] == 'populate'):
 		UND = True
 		import subprocess
@@ -400,10 +406,11 @@ def interpreter(string):
 		c.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
 		tableList = c.fetchall()
 		formattedTableList = remove(tableList)
-		#print formattedTableList
 		for table in formattedTableList:
 			classifyData(data,table,'KNOWLEDGE','wisdom')
 		conn.commit()
+
+	#COMANDO SQL PARA ABRIR O CONSOLE SQL
 	if(string[0:len('sql')] == 'sql'):
 		UND = True
 		c = conn.cursor()
@@ -426,11 +433,13 @@ def interpreter(string):
 					Kass.talk(str(c.fetchall()))
 		except Exception as e:
 			Kass.talk(e)
+
+
+	#COMANDO LISTAR TABELAS PARA VISUALIZAR INFORMAÇÕES DO BANCO DE DADOS
 	listarTables = ['listar tabelas', 'mostrar tabelas','todas as tabelas']
 	for i in listarTables:
 		if(string[0:len(i)] == str(i)):
 			UND = True
-			#ListAllTables()
 			listDatabaseInformation()
 	else:
 		if UND == False:
@@ -441,7 +450,7 @@ def interpreter(string):
 			else:
 				act(result,var)
 
-			#Kass.dont_understand()
+
 def question():
 		Kass.talk("Olá!")
 		while 1:
