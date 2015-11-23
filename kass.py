@@ -191,7 +191,7 @@ def act(action,tString):
 				talkOptions_00 = ['Pesquisa cancelada','Ok, cancelar então.','Você que sabe.', "Tudo bem. Abortando...",'Tudo bem.','Pronto.']
 				Kass.random_answer(talkOptions_00)
 	except KeyboardInterrupt:
-		felitre()
+		question()
 
 
 
@@ -286,7 +286,7 @@ def interpreter(string):
 				act(result,var)
 
 			#Kass.dont_understand()
-def felitre():
+def question():
 		Kass.talk("Olá!")
 		while 1:
 			if(os.name == 'nt'):
@@ -300,11 +300,17 @@ def felitre():
 			pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...')
 
 def main():
-	if(str(os.name) == 'nt'):
-		os.system('chcp 1252')
+	try:
+		if(str(os.name) == 'nt'):
+			os.system('''path = %path%;C:\\WINDOWS\\SYSTEM32''')
+			os.system('chcp 1252 > nul')
+	except Exception as e:
+		#debug
+		print str(e)
+		pass
 	init()
 	
-	felitre()
+	question()
 
 
 
