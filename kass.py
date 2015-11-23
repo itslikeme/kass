@@ -348,7 +348,11 @@ def init():
 		Kass.talk('Erro crítico na inicialização. Abortando...')
 		sys.exit(0)
 
-
+def clean():
+	if(os.name == 'nt'):
+		os.system('cls')
+	if(os.name == 'posix'):
+		os.system('clear')
 
 def interpreter(string):
 	UND = False
@@ -390,13 +394,24 @@ def interpreter(string):
 		for table in formattedTableList:
 			classifyData(data,table,'KNOWLEDGE','wisdom')
 		conn.commit()
-	if(string[0:len('console')] == 'console'):
+	if(string[0:len('sql')] == 'sql'):
 		UND = True
 		c = conn.cursor()
+		global console
+		console = True
+		string = 'Iniciando console SQL para o Operador...'
+		Kass.talk(string)
 		try:
-			c.execute(string[len('console '):].upper())
-			conn.commit()
-			print c.fetchall()
+			while console == True:
+				sqlConsole = raw_input('\n	sql> ')
+				if(sqlConsole == 'quit'):
+					console == False
+				else:
+					string = 'Executando comando "' + str(sqlConsole) + '"...'
+					Kass.talk(string)
+					c.execute(sqlConsole)
+					conn.commit()
+					Kass.talk(str(c.fetchall()))
 		except Exception as e:
 			Kass.talk(e)
 	listarTables = ['listar tabelas', 'mostrar tabelas','todas as tabelas']
@@ -450,6 +465,7 @@ def question():
 			if(os.name == 'posix'):
 				os.system('clear')
 			print ProgramInfo.banner
+
 			command = raw_input('\n Operador: ')
 			command = command.lower()
 			interpreter(command)
