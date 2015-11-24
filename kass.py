@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import os, sys, sqlite3, random
+import os, sys, sqlite3, random, time, subprocess
 
 
 
@@ -129,6 +129,42 @@ class Kass:
 
 		weatherForecast = Forecast(l.get_name(),w.get_temperature(unit='celsius'),w.get_detailed_status(),w.get_pressure(),w.get_sunrise_time('iso'),w.get_humidity(), w.get_wind(),w.get_reference_time(timeformat='iso'),l.get_lon(),l.get_lat(),l.get_ID(),w.get_rain(),w.get_sunset_time('iso'))
 
+	class Browser:
+		def __init__(self, browser_name,browser_path):
+			self.name = browser_name
+			self.path = browser_path
+
+		def start(self, link):
+			if(os.path.isfile(self.path)):
+				start_cmd = str(self.path) + ' "' + str(link) + '"'
+				p = subprocess.Popen(start_cmd)
+			else:
+				print 'Could not find ' + str(self.name) + ' executable.'
+				return 
+
+		@staticmethod
+		def find_browser_exe():
+			global Chrome
+			global Firefox
+			global Iexplore
+			browser_exe_names = ['chrome.exe','iexplore.exe','firefox.exe']
+			common_dir_names = ['C:\\Program Files\\Google\\','C:\\Program Files (x86)\\Google\\','C:\\Program Files\\Mozilla Firefox\\','C:\\Program Files (x86)\\Mozilla Firefox\\','C:\\Program Files\\Internet Explorer\\','C:\\Program Files (x86)\\Internet Explorer\\']
+			for dir_name in common_dir_names:
+				if(os.path.isdir(dir_name)):
+					for browser_name in browser_exe_names:
+						for root, dirs, files in os.walk(dir_name):
+							for file in files:
+								if file.endswith(browser_name):
+									if(file == 'chrome.exe'):
+										Chrome = Kass.Browser('Google Chrome',os.path.join(root,file))
+										print ' ' + Chrome.name + ' encontrado.'
+									if(file == 'firefox.exe'):
+										Firefox = Kass.Browser('Mozilla Firefox',os.path.join(root,file))
+										print ' ' + Firefox.name + ' encontrado.'
+									if(file == 'iexplore.exe'):
+										Iexplore = Kass.Browser('Internet Explorer',os.path.join(root,file))
+										print ' ' + Iexplore.name + ' encontrado.'
+
 class Database:
 	db_name = 'Kass.db'
 	db_Path = Program.script.current_folder + '/' + db_name
@@ -156,7 +192,7 @@ class Database:
 	@staticmethod
 	def create():
 		global conn
-		user_input = raw_input(' Kass: Deseja criar um novo banco de dados? \n Operador: ')
+		user_input = raw_input('\n Kass: Deseja criar um novo banco de dados? \n\n Operador: ')
 		words_positive = ['sim','afirmativo','quero','criar','novo','certeza']
 		words_negative = ['nao','não','negativo','cancelar','abortar']
 		user_input = str(user_input).lower()
@@ -434,6 +470,23 @@ class Interpreter:
 				errorString = 'Ocorreu um erro: ' + str(e)
 				Kass.talk(errorString)
 
+		if(string[0:len('internet')] == 'internet'):
+			arg = string[len('internet '):]
+			if(arg <> ''):
+				
+				UND = True
+				def browsing():
+					objList = [Chrome, Firefox, Iexplore]
+					for obj in objList:
+						if(obj.path is not None):
+							obj.start(arg)
+							return 'Abrindo ' + str(arg) + ' no ' + str(obj.name)
+				Kass.talk(browsing())
+			else:
+				talkString = 'É necessário informar um URL válida!'
+				Kass.talk(talkString)
+
+
 		#COMANDO POPULATE PARA CLASSIFICAÇÃO DE DADOS NAS TABELAS DO BANCO DE DADOS
 		if(string[0:len('populate')] == 'populate'):
 			UND = True
@@ -575,12 +628,20 @@ def debug():
 
 
 def init():
+	init_TalkString_05 = '[*] Inicializando...'
+	Kass.talk(init_TalkString_05)
 	global conn
 	global First
 	First = False
 	Critical = False
+	init_TalkString_01 = '[+] Procurando pelo banco de dados...'
+	Kass.talk(init_TalkString_01)
+	time.sleep(1)
 	#database exists?
 	if os.path.isfile(Database.db_name):
+		init_TalkString_02 = 'Banco de dados encontrado.'
+		Kass.talk(init_TalkString_02)
+		time.sleep(1)
 		conn = sqlite3.connect(Program.dbPath)
 		conn.text_factory = str
 	else:
@@ -590,6 +651,13 @@ def init():
 		else:
 			Critical = True
 
+	init_TalkString_03 = '[+] Procurando por executaveis de Browser...'
+	Kass.talk(init_TalkString_03)
+	Kass.Browser.find_browser_exe()
+
+
+
+	init_TalkString_04 = '[*] Inicializacao concluida.'
 	#end_of_init
 	if Critical == True:
 		Kass.talk('Erro crítico na inicialização. Abortando...')
