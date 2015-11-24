@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import os, sys, sqlite3, random, time, subprocess
+import os, sys, sqlite3, random, time, subprocess, pyowm
 
 
 
@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.1.3'
+	version = '0.1.4'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -20,6 +20,7 @@ class Program:
 	\_| \_/\__,_|___/___/
 	_____________________________\n
 	''' +  str(name) + ' v' + str(version)
+	author = 'n3st0r'
 	class script:
 		current_folder = str(os.path.dirname(sys.argv[0]))
 		file_name = str(sys.argv[0])
@@ -82,7 +83,6 @@ class Kass:
 
 	@staticmethod
 	def climate(city):
-		import pyowm
 		API_KEY = '88bef2e2314e0affe5c32f6caf8a3a4d'
 		owm = pyowm.OWM(API_KEY)
 
@@ -113,16 +113,17 @@ class Kass:
 
 				def display_info():
 					print '\n____________________________________________\n'
-					print 'Hora da consulta:  ' + str(self.time) + '\n'
-					print 'Informacao metereologica da cidade "' + str(self.name) + '" :\n'
-					print 'Nome: ' + str(self.name) + ' - ID: ' + str(self.ID)
-					print 'Geolocation: Lat(' + str(self.lat) + ') Lon(' + str(self.lon) + ')' 
-					print 'Temperatura: ' + str(self.temp) + ' Celsius'
-					print 'Chuva: ' + str(self.rain)
-					print 'Pressao Atmosferica: ' + str(self.pressure)
-					print 'Humidade relativa do ar: ' + str(self.humidity)
-					print 'Nascer do Sol: ' + str(self.sunrise)
-					print 'Por do Sol: ' + str(self.sunset)
+					print ' Hora da consulta:  ' + str(self.time) + '\n'
+					print ' Informacao metereologica da cidade "' + str(self.name) + '" :\n'
+					print ' Nome: ' + str(self.name) + ' - ID: ' + str(self.ID)
+					print ' Geolocation: Lat(' + str(self.lat) + ') Lon(' + str(self.lon) + ')' 
+					print ' Temperatura: ' + str(self.temp) + ' Celsius'
+					print ' Estado atual: ' + str(self.status)
+					print ' Chuva: ' + str(self.rain)
+					print ' Pressao Atmosferica: ' + str(self.pressure)
+					print ' Humidade relativa do ar: ' + str(self.humidity)
+					print ' Nascer do Sol: ' + str(self.sunrise)
+					print ' Por do Sol: ' + str(self.sunset)
 					print '\n____________________________________________\n'
 				display_info()
 				
@@ -157,13 +158,13 @@ class Kass:
 								if file.endswith(browser_name):
 									if(file == 'chrome.exe'):
 										Chrome = Kass.Browser('Google Chrome',os.path.join(root,file))
-										print ' ' + Chrome.name + ' encontrado.'
+										print ' ' + Chrome.name + ' encontrado.\n'
 									if(file == 'firefox.exe'):
 										Firefox = Kass.Browser('Mozilla Firefox',os.path.join(root,file))
-										print ' ' + Firefox.name + ' encontrado.'
+										print ' ' + Firefox.name + ' encontrado.\n'
 									if(file == 'iexplore.exe'):
 										Iexplore = Kass.Browser('Internet Explorer',os.path.join(root,file))
-										print ' ' + Iexplore.name + ' encontrado.'
+										print ' ' + Iexplore.name + ' encontrado.\n'
 
 class Database:
 	db_name = 'Kass.db'
@@ -490,7 +491,6 @@ class Interpreter:
 		#COMANDO POPULATE PARA CLASSIFICAÇÃO DE DADOS NAS TABELAS DO BANCO DE DADOS
 		if(string[0:len('populate')] == 'populate'):
 			UND = True
-			import subprocess
 			data = Interpreter.extract('KNOWLEDGE')
 			c = conn.cursor()
 			c.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
@@ -510,7 +510,6 @@ class Interpreter:
 				while(cmdConsole <> 'QUIT'):
 					cmdConsole = raw_input('\n 	CMD>')
 					if cmdConsole <> 'QUIT':
-						import subprocess
 						cmdCommand = subprocess.check_output(str(cmdConsole),shell=True)
 						talkOptions_02 = 'Executando ' + str(cmdCommand) + '...'
 						Kass.talk(talkOptions_02)
@@ -607,7 +606,7 @@ class Interpreter:
 			command = raw_input('\n Operador: ')
 			command = command.lower()
 			Interpreter.interpreter(command)
-			pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...\n')
+			pause = raw_input(' Kass: Pressione qualquer tecla para seguir em frente...\n')
 			if(pause <> ""):
 				Interpreter.interpreter(pause)
 
@@ -651,7 +650,7 @@ def init():
 		else:
 			Critical = True
 
-	init_TalkString_03 = '[+] Procurando por executaveis de Browser...'
+	init_TalkString_03 = '[+] Procurando por executaveis de Browser...\n'
 	Kass.talk(init_TalkString_03)
 	Kass.Browser.find_browser_exe()
 

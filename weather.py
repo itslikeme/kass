@@ -36,6 +36,7 @@ class Forecast():
 			print 'Nome: ' + str(self.name) + ' - ID: ' + str(self.ID)
 			print 'Geolocation: Lat(' + str(self.lat) + ') Lon(' + str(self.lon) + ')' 
 			print 'Temperatura: ' + str(self.temp) + ' Celsius'
+			print 'Estado atual: ' + str(self.status)
 			print 'Chuva: ' + str(self.rain)
 			print 'Pressao Atmosferica: ' + str(self.pressure)
 			print 'Humidade relativa do ar: ' + str(self.humidity)
