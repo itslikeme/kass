@@ -526,7 +526,6 @@ def main():
 		debug()
 	try:
 		if(str(os.name) == 'nt'):
-			print 'dewbug'
 			os.system('chcp 1252 > nul')
 	except Exception as e:
 		print str(e)
