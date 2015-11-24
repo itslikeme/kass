@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.1.1'
+	version = '0.1.2'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -18,10 +18,8 @@ class Program:
 	|    \ / _` / __/ __|
 	| |\  \ (_| \__ \__ \\
 	\_| \_/\__,_|___/___/
-	_____________________________
-	Database Management Software
-                     
-	'''
+	_____________________________\n
+	''' +  str(name) + ' v' + str(version)
 	class script:
 		current_folder = str(os.path.dirname(sys.argv[0]))
 		file_name = str(sys.argv[0])
@@ -33,7 +31,7 @@ class Kass:
 
 	@staticmethod
 	def talk(string):
-		print '\nKass: ' + str(string)
+		print '\n Kass: ' + str(string)
 
 	@staticmethod
 	def dont_understand():
@@ -96,7 +94,7 @@ class Database:
 	@staticmethod
 	def create():
 		global conn
-		user_input = raw_input('Kass: Deseja criar um novo banco de dados? \n Operador: ')
+		user_input = raw_input(' Kass: Deseja criar um novo banco de dados? \n Operador: ')
 		words_positive = ['sim','afirmativo','quero','criar','novo','certeza']
 		words_negative = ['nao','não','negativo','cancelar','abortar']
 		user_input = str(user_input).lower()
@@ -226,7 +224,7 @@ class Interpreter:
 				Kass.talk(talkstring)
 				resultIndx = 1
 				talkstring = 'Oque deseja fazer?'
-				command = raw_input('\nOperator: ')
+				command = raw_input('\n Operador: ')
 				command = command.lower()
 				commandList = command.split(' ')
 				abortStrings = ['cancelar','abortar','ignorar','sai fora','sair','parar','nao']
@@ -254,17 +252,19 @@ class Interpreter:
 								string = string.replace(keyInString,charmap[key])
 							string = string 
 							f_striggi.append(string)
-						print '\nResultado #' + str(resultIndx)
+						print '\n___________________________________________________\n\n Resultado #' + str(resultIndx)
 						resultIndx+=1
 						
 						for i in f_striggi:
 							
 							for key in charmap:
 								keyInString = key.lower()
-							print (i.replace(keyInString,charmap[key])).upper()
+							print ' ' + (i.replace(keyInString,charmap[key])).upper()
 							
-						print '\n'
-						pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...')
+						print '\n___________________________________________________\n'
+						talkOptions_04 = ['Pressione qualquer tecla para seguir em frente...', 'Pressione uma tecla para continuar...','Tecle algo quando terminar...']
+						Kass.random_answer(talkOptions_04)
+						pause = raw_input('')
 				else:
 					talkOptions_00 = ['Pesquisa cancelada','Ok, cancelar então.','Você que sabe.', "Tudo bem. Abortando...",'Tudo bem.','Pronto.']
 					Kass.random_answer(talkOptions_00)
@@ -450,7 +450,7 @@ class Interpreter:
 				command = raw_input('\n Operador: ')
 				command = command.lower()
 				Interpreter.interpreter(command)
-				pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...')
+				pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...\n')
 
 
 def debug():
