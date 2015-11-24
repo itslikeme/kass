@@ -1,16 +1,16 @@
-# coding: iso-8859-1 -*-
+# -*- coding: UTF-8 -*-
 import os, sys, sqlite3, random
 
 
 
 class developer:
-	debug_mode = True
+	debug_mode = False
 
 
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.1.2'
+	version = '0.1.3'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -66,6 +66,18 @@ class Kass:
 		if(os.name == 'posix'):
 			os.system('clear')
 
+	@staticmethod
+	def print_list(lista,filtro):
+		element_index = 1
+		if(filtro == None):
+			for i in lista:
+				print str(element_index) +'. ' + i + '\n'
+				element_index+=1
+		else:
+			res = [k for k in lista if filtro in k]
+			for i in res:
+				print str(element_index) + '. ' + i + '\n'
+				element_index+=1
 
 class Database:
 	db_name = 'Kass.db'
@@ -77,7 +89,7 @@ class Database:
 		c.execute('''SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;''')
 		tableList = c.fetchall()
 		formattedTableList = Kass.remove(tableList)
-		index = 1
+		Database_InfoList = []
 		for command in formattedTableList:
 			c.execute("SELECT sql FROM sqlite_master WHERE tbl_name = " + "'" + str(command) + "'" + " AND type='table'")
 			result = c.fetchall()
@@ -86,10 +98,10 @@ class Database:
 			c.execute("SELECT Count(*) FROM " + str(command))
 			number = c.fetchall()
 			number = str(number)[2:-3]
-			daString = str(index) + '. ' '[' + str(command) + ']:[' + str(number) + ']  ' + str(result) + '\n'
+			daString = '[' + str(command) + ']:[' + str(number) + ']  ' + str(result) + '\n'
 			daString = daString.strip('"')
-			print daString
-			index+=1
+			Database_InfoList.append(daString)
+		return Database_InfoList
 
 	@staticmethod
 	def create():
@@ -339,6 +351,8 @@ class Interpreter:
 	@staticmethod
 	def interpreter(string):
 		UND = False
+		if(string == ''):
+			Interpreter.question()
 
 		#DETECTA SE O QUOTE FOI UTILIZADO
 		if(string[0:1] == '"'):
@@ -427,11 +441,17 @@ class Interpreter:
 
 
 		#COMANDO LISTAR TABELAS PARA VISUALIZAR INFORMAÇÕES DO BANCO DE DADOS
-		listarTables = ['listar tabelas', 'mostrar tabelas','todas as tabelas']
+		listarTables = ['tabelas','tabela']
 		for i in listarTables:
 			if(string[0:len(i)] == str(i)):
 				UND = True
-				Database.list()
+				string_analysis = string.split(' ')
+				if(i in string_analysis):
+					string_analysis.remove(i)
+				if(len(string_analysis) == 1):
+					Kass.print_list(Database.list(),str(string_analysis[0]).upper())
+				else:
+					Kass.print_list(Database.list(),None)
 		else:
 			if UND == False:
 				result, tString = Interpreter.analyze(string)
@@ -443,14 +463,24 @@ class Interpreter:
 
 	@staticmethod
 	def question():
-			Kass.talk("Olá!")
-			while 1:
-				Kass.clean()
-				print Program.banner
-				command = raw_input('\n Operador: ')
-				command = command.lower()
-				Interpreter.interpreter(command)
-				pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...\n')
+		global First
+	
+		
+		while 1:
+			Kass.clean()
+			print Program.banner
+			if(First == False):
+				Kass.talk("Olá! Seja bem-vindo!")
+				First = True
+			else:
+				talkOptions_05 = ['No que posso ajudar?','No que posso servi-lo?','Esqueceu de alguma coisa?','Meu nome é Kass. Vivo para servir.','Você confia em mim, né?']
+				Kass.random_answer(talkOptions_05)
+			command = raw_input('\n Operador: ')
+			command = command.lower()
+			Interpreter.interpreter(command)
+			pause = raw_input('Kass: Pressione qualquer tecla para seguir em frente...\n')
+			if(pause <> ""):
+				Interpreter.interpreter(pause)
 
 
 def debug():
@@ -470,6 +500,8 @@ def debug():
 
 def init():
 	global conn
+	global First
+	First = False
 	Critical = False
 	#database exists?
 	if os.path.isfile(Database.db_name):
@@ -494,6 +526,7 @@ def main():
 		debug()
 	try:
 		if(str(os.name) == 'nt'):
+			print 'dewbug'
 			os.system('chcp 1252 > nul')
 	except Exception as e:
 		print str(e)
