@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.1.4'
+	version = '0.1.5'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -118,6 +118,11 @@ class Kass:
 				print ' RESULTADO: ' + str(imc_status)
 				print '\n ____________________________________________\n'
 
+		@classmethod
+		def IMC_DB_Insertion(self, person, weight, height, imc_num, imc_status):
+			c = conn.cursor()
+			c.execute("INSERT INTO IMC VALUES (" + "'" + str(person) + "','" + str(weight) + "','" + str(height) + "','" + str(imc_num) + "','" + str(imc_status) + "')")
+			print ' [+] SQLITE3: Results added to IMC table.\n'
 
 		@classmethod
 		def IMC(self, person, weight, height):
@@ -131,6 +136,7 @@ class Kass:
 				if(Kass.Calculate.IMC_Status(int_imc_num) <> False):
 					str_imc_status = Kass.Calculate.IMC_Status(int_imc_num)
 				Kass.Calculate.IMC_Report(str(person), str(weight), str(height), str(int_imc_num), str(str_imc_status))
+				Kass.Calculate.IMC_DB_Insertion(str(person), str(weight), str(height), str(int_imc_num), str(str_imc_status))
 
 
 			
@@ -525,6 +531,25 @@ class Interpreter:
 			except Exception as e:
 				errorString = 'Ocorreu um erro: ' + str(e)
 				Kass.talk(errorString)
+
+		if(string[0:len('import')] == 'import'):
+			UND = True
+			arg = string[len('import '):]
+			if(arg <> ""):
+				if(os.path.isfile(arg)):
+					f = open(arg,'r')
+					lines = f.readlines()
+					for i in lines:
+						i = i.replace('\n','')
+						Interpreter.interpreter(i)
+				else:
+					talkOptions_10 = ['Não encontrei o arquivo.','Não pude encontrar o arquivo.','Não foi possível encontrar o arquivo.']
+					Kass.random_answer(talkOptions_10)
+
+			else:
+				talkOptions_09 = ['Não encontrei nenhum argumento.', 'É necessário um argumento.','É necessário um arquivo texto como argumento.']
+				Kass.random_answer(talkOptions_09)
+
 
 		if(string[0:len('internet')] == 'internet'):
 			arg = string[len('internet '):]
