@@ -29,7 +29,6 @@ class Program:
 
 
 class Kass:
-
 	@staticmethod
 	def talk(string):
 		print '\n Kass: ' + str(string)
@@ -79,6 +78,62 @@ class Kass:
 			for i in res:
 				print str(element_index) + '. ' + i + '\n'
 				element_index+=1
+	
+
+	class Calculate:
+		"""This class is responsible for math operations dealt by Kass."""
+		@classmethod
+		def IMC_Status(self, number):
+			number = float(number)
+			str_imc_status = ''
+			if(number < 17):
+				str_imc_status = 'Very low'
+			elif(number > 17 and number < 19):
+				str_imc_status = 'Low'
+			elif(number > 19 and number < 25):
+				str_imc_status = 'Normal'
+			elif(number > 25 and number < 30):
+				str_imc_status = 'Overweight'
+			elif(number > 30 and number < 35):
+				str_imc_status = 'Obesity I'
+			elif(number > 35 and number < 40):
+				str_imc_status = 'Obesity II'
+			elif(number > 40):
+				str_imc_status = 'Obesity III (Morbid)'
+			else:
+				print ' [!] Invalid integer.'
+				return False
+			return str_imc_status
+
+		@classmethod
+		def IMC_Report(self, person, weight, height, imc_num, imc_status):
+			if(imc_status <> None):
+				Kass.clean()
+				print '\n RELATORIO DE CALCULO:'
+				print '\n ____________________________________________\n'
+				print ' NOME: ' + str(person)
+				print ' PESO: ' + str(weight)
+				print ' ALTURA: ' + str(height)
+				print ' IMC: ' + str(imc_num)
+				print ' RESULTADO: ' + str(imc_status)
+				print '\n ____________________________________________\n'
+
+
+		@classmethod
+		def IMC(self, person, weight, height):
+			if(person <> None):
+				weight = int(weight)
+				height = float(height)
+				imc = (weight / (height **2))
+				str_imc_num = str(imc)[:4]
+				int_imc_num = float(str_imc_num)
+				str_imc_status = 'None'
+				if(Kass.Calculate.IMC_Status(int_imc_num) <> False):
+					str_imc_status = Kass.Calculate.IMC_Status(int_imc_num)
+				Kass.Calculate.IMC_Report(str(person), str(weight), str(height), str(int_imc_num), str(str_imc_status))
+
+
+			
 
 
 	@staticmethod
@@ -499,6 +554,23 @@ class Interpreter:
 			for table in formattedTableList:
 				Interpreter.populate(data,table,'KNOWLEDGE','wisdom')
 			conn.commit()
+
+
+		if(string == 'imc'):
+			UND = True
+			talkOptions_06 = 'Posso calcular o seu IMC, pra isso, preciso fazer algumas perguntas: '
+			Kass.talk(talkOptions_06)
+			talkOptions_07 = ['Me diga o seu nome: ', 'Me informe seu nome: ','Preciso do seu nome: ']
+			Kass.random_answer(talkOptions_07)
+			name = raw_input('\n Operador: ')
+			talkOptions_08 = ['Agora, o seu peso: ', 'Preciso, agora, do seu peso:', 'Necessito saber o seu peso: ', 'Qual seu peso?']
+			Kass.random_answer(talkOptions_08)
+			weight = raw_input('\n Operador: ')
+			Kass.talk('A altura deve ser informada no seguinte formato: X.XX')
+			talkOptions_09 = ['Por ultimo, a sua altura: ', 'Enfim, a altura: ', 'Só resta a altura: ']
+			Kass.random_answer(talkOptions_09)
+			height = raw_input('\n Operador: ')
+			Kass.Calculate.IMC(name, weight, height)
 
 		#EXECUTAR CONSOLE COMMAND PROMPT
 		if(string[0:len('cmd')] == 'cmd'):
