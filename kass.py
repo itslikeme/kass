@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.2.0'
+	version = '0.2.1'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -29,6 +29,34 @@ class Program:
 
 
 class Kass:
+
+	# update_progress() : Displays or updates a console progress bar
+	## Accepts a float between 0 and 1. Any int will be converted to a float.
+	## A value under 0 represents a 'halt'.
+	## A value at 1 or bigger represents 100%
+	@staticmethod
+	def update_progress(progress):
+	    barLength = 10 # Modify this to change the length of the progress bar
+	    status = ""
+	    if isinstance(progress, int):
+	        progress = float(progress)
+	    if not isinstance(progress, float):
+	        progress = 0
+	        status = "error: progress var must be float\r\n"
+	    if progress < 0:
+	        progress = 0
+	        status = "Halt...\r\n"
+	    if progress >= 1:
+	        progress = 1
+	        status = "Done...\r\n"
+	    block = int(round(barLength*progress))
+	    text = "\r Percent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
+	    sys.stdout.write(text)
+	    sys.stdout.flush()
+
+
+
+
 	@staticmethod
 	def talk(string):
 		print '\n Kass: ' + str(string)
@@ -219,17 +247,30 @@ class Kass:
 								if file.endswith(browser_name):
 									if(file == 'chrome.exe'):
 										Chrome = Kass.Browser('Google Chrome',os.path.join(root,file))
-										print ' ' + Chrome.name + ' encontrado.\n'
+										#print ' ' + Chrome.name + ' encontrado.\n'
 									if(file == 'firefox.exe'):
 										Firefox = Kass.Browser('Mozilla Firefox',os.path.join(root,file))
-										print ' ' + Firefox.name + ' encontrado.\n'
+										#print ' ' + Firefox.name + ' encontrado.\n'
 									if(file == 'iexplore.exe'):
 										Iexplore = Kass.Browser('Internet Explorer',os.path.join(root,file))
-										print ' ' + Iexplore.name + ' encontrado.\n'
+										#print ' ' + Iexplore.name + ' encontrado.\n'
 
 class Database:
 	db_name = 'Kass.db'
 	db_Path = Program.script.current_folder + '/' + db_name
+
+
+	@staticmethod
+	def find_db():
+		#database exists?
+		if os.path.isfile(Database.db_name):
+			conn = sqlite3.connect(Program.dbPath)
+			conn.text_factory = str
+		else:
+			if(Database.create() == True):
+				Critical = False
+			else:
+				Critical = True
 
 	class Data:
 		'''This class is responsible for importing database structure (table names, and columns names) into memory.'''
@@ -291,43 +332,10 @@ class Database:
 	@staticmethod
 	def create():
 		global conn
-		user_input = raw_input('\n Kass: Deseja criar um novo banco de dados? \n\n Operador: ')
-		words_positive = ['sim','afirmativo','quero','criar','novo','certeza']
-		words_negative = ['nao','não','negativo','cancelar','abortar']
-		user_input = str(user_input).lower()
-		user_words = user_input.split()
-		for i in user_words:
-			i = i.strip()
-		yes = 0
-		no = 0
-
-
-		#relacionamento de dados
-		for u_word in user_words:
-			for word in words_negative:
-				if(u_word == word):
-					no+=1
-			for word in words_positive:
-				if(u_word == word):
-					yes+=1
-
-
-		#analise do resultado
-		if(yes > no):
-			if not os.path.isfile(Database.db_name):
-				conn = sqlite3.connect(Database.db_Path)
-				conn.text_factory = str
-				Kass.talk('Banco de dados criado!')
-				return True
-			else:
-				Kass.talk('Banco de dados já existe!')
-				return False
-		elif(yes == no):
-			Kass.talk("Você me deixou confusa... Tenta de novo, ok?")
-			sys.exit(0)
-		else:
-			Kass.talk("Não quer banco de dados? Abortar...")
-			sys.exit(0)
+		if not os.path.isfile(Database.db_name):
+			conn = sqlite3.connect(Database.db_Path)
+			conn.text_factory = str
+			return True
 
 class Interpreter:
 	class keywords:
@@ -739,36 +747,31 @@ def debug():
 
 
 def init():
+	Kass.clean()
 	init_TalkString_05 = '[*] Inicializando...'
 	Kass.talk(init_TalkString_05)
 	global conn
 	global First
 	First = False
 	Critical = False
-	init_TalkString_01 = '[+] Procurando pelo banco de dados...'
-	Kass.talk(init_TalkString_01)
-	time.sleep(1)
-	#database exists?
-	if os.path.isfile(Database.db_name):
-		init_TalkString_02 = 'Banco de dados encontrado.'
-		Kass.talk(init_TalkString_02)
+	init_Steps = {'[+] Procurando pelo banco de dados...\n':Database.find_db(),'[+] Procurando por executaveis de Browser...\n':Kass.Browser.find_browser_exe(),'[+] Injetando dados do banco de dados na memoria...\n':Database.Data.structureFetch()}
+	
+	max_steps = float(len(init_Steps))
+	one_step = float(1)
+	calc = (one_step/max_steps)
+	for step in init_Steps:
+		Kass.clean()
+		Kass.talk(step)
+		init_Steps[step]
+		Kass.update_progress(calc)
+		calc = calc+calc
 		time.sleep(1)
-		conn = sqlite3.connect(Program.dbPath)
-		conn.text_factory = str
-	else:
-		Kass.talk("Eu não encontrei o banco de dados!")
-		if(Database.create() == True):
-			Critical = False
-		else:
-			Critical = True
 
-	init_TalkString_03 = '[+] Procurando por executaveis de Browser...\n'
-	Kass.talk(init_TalkString_03)
-	Kass.Browser.find_browser_exe()
+		
 
-
-
-	init_TalkString_04 = '[*] Inicializacao concluida.'
+	init_TalkString_04 = ' [*] Inicializacao concluida.'
+	Kass.talk(init_TalkString_04)
+	cont = raw_input('')
 	#end_of_init
 	if Critical == True:
 		Kass.talk('Erro crítico na inicialização. Abortando...')
