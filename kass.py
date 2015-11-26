@@ -10,11 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-<<<<<<< HEAD
 	version = '0.2.0'
-=======
-	version = '0.1.5'
->>>>>>> a0634d08153130bfb50ab389d4b1f28cc1daf778
 	banner = '''
 	 _   __              
 	| | / /              
@@ -235,7 +231,6 @@ class Database:
 	db_name = 'Kass.db'
 	db_Path = Program.script.current_folder + '/' + db_name
 
-<<<<<<< HEAD
 	class Data:
 		'''This class is responsible for importing database structure (table names, and columns names) into memory.'''
 		
@@ -273,8 +268,6 @@ class Database:
 			#print dataStruct
 			return dataStruct
 
-=======
->>>>>>> a0634d08153130bfb50ab389d4b1f28cc1daf778
 	@staticmethod
 	def list():
 		c = conn.cursor()
@@ -389,7 +382,6 @@ class Interpreter:
 		return maior, objectX.lower()
 
 	@staticmethod
-<<<<<<< HEAD
 	def act2(action, tString, dataStruct):
 		c = conn.cursor()
 		banned_tables = ['IMC']
@@ -454,8 +446,6 @@ class Interpreter:
 					pause = raw_input(" Kass: Pressione uma tecla para o proximo...\n")
 		
 	@staticmethod
-=======
->>>>>>> a0634d08153130bfb50ab389d4b1f28cc1daf778
 	def act(action,tString):
 		try:
 			if(action == 'nada'):
@@ -793,25 +783,15 @@ class Interpreter:
 				result, tString = Interpreter.analyze(string)
 				var = Interpreter.object(string)
 				if(var == ''):
-<<<<<<< HEAD
 					Interpreter.act2(result,tString, dataStruct)
 				else:
 					Interpreter.act2(result,var,dataStruct)
-=======
-					Interpreter.act(result,tString)
-				else:
-					Interpreter.act(result,var)
->>>>>>> a0634d08153130bfb50ab389d4b1f28cc1daf778
 
 	@staticmethod
 	def question():
 		global First
-<<<<<<< HEAD
 		global dataStruct
 		dataStruct = Database.Data.structureFetch()
-=======
-	
->>>>>>> a0634d08153130bfb50ab389d4b1f28cc1daf778
 		
 		while 1:
 			Kass.clean()
@@ -893,10 +873,6 @@ def main():
 		print str(e)
 		pass
 	init()
-<<<<<<< HEAD
-	
-=======
->>>>>>> a0634d08153130bfb50ab389d4b1f28cc1daf778
 	Interpreter.question()
 
 
