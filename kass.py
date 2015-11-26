@@ -87,21 +87,21 @@ class Kass:
 			number = float(number)
 			str_imc_status = ''
 			if(number < 17):
-				str_imc_status = 'Very low'
+				str_imc_status = 'Muito Abaixo'
 			elif(number > 17 and number < 19):
-				str_imc_status = 'Low'
+				str_imc_status = 'Abaixo'
 			elif(number > 19 and number < 25):
 				str_imc_status = 'Normal'
 			elif(number > 25 and number < 30):
-				str_imc_status = 'Overweight'
+				str_imc_status = 'Sobrepeso'
 			elif(number > 30 and number < 35):
-				str_imc_status = 'Obesity I'
+				str_imc_status = 'Obesidade I'
 			elif(number > 35 and number < 40):
-				str_imc_status = 'Obesity II'
+				str_imc_status = 'Obesidade II'
 			elif(number > 40):
-				str_imc_status = 'Obesity III (Morbid)'
+				str_imc_status = 'Obesidade III (Morbido)'
 			else:
-				print ' [!] Invalid integer.'
+				print ' [!] Numero Invalido.'
 				return False
 			return str_imc_status
 
@@ -122,7 +122,7 @@ class Kass:
 		def IMC_DB_Insertion(self, person, weight, height, imc_num, imc_status):
 			c = conn.cursor()
 			c.execute("INSERT INTO IMC VALUES (" + "'" + str(person) + "','" + str(weight) + "','" + str(height) + "','" + str(imc_num) + "','" + str(imc_status) + "')")
-			print ' [+] SQLITE3: Results added to IMC table.\n'
+			print ' [+] SQLITE3: Resultados adicionados a Tabela IMC.\n'
 
 		@classmethod
 		def IMC(self, person, weight, height):
