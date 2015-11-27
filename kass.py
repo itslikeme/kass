@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.2.1'
+	version = '0.2.2'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -572,7 +572,7 @@ class Interpreter:
 										word_definition = word_definition.replace('<br/>','\n')
 										word_definition = word_definition.replace('_','')
 										if(table == word_class):
-											
+
 											talkString = 'Você quer adicionar ' + str(word) + ' para a tabela de ' + str(word_class) + ":" + str(table) + "?"
 											#print data
 											Kass.talk(talkString)
