@@ -347,10 +347,17 @@ class Interpreter:
 	@staticmethod
 	def object(string):
 		objIndex = string.find('"')
-		remainingString = string[objIndex:]
-		objFinalIndex = remainingString[1:].find('"')
-		objFinalIndex = objFinalIndex + objIndex + 2
-		theLastVariable = string[(objIndex+1):(objFinalIndex-1)]
+		if(objIndex == -1):
+			word_list = string.split(' ')
+			last_entry = word_list[(len(word_list)-1)]
+			if(last_entry[(len(last_entry)-1):] == "?"):
+				last_entry = last_entry[:-1]
+			theLastVariable = last_entry
+		else:
+			remainingString = string[objIndex:]
+			objFinalIndex = remainingString[1:].find('"')
+			objFinalIndex = objFinalIndex + objIndex + 2
+			theLastVariable = string[(objIndex+1):(objFinalIndex-1)]
 		return theLastVariable
 
 	@staticmethod
@@ -795,4 +802,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
