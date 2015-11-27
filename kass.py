@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import os, sys, sqlite3, random, time, subprocess, pyowm
+import os, sys, sqlite3, random, time, subprocess, pyowm, json, urllib2
 
 
 
@@ -50,7 +50,7 @@ class Kass:
 	        progress = 1
 	        status = "Done...\r\n"
 	    block = int(round(barLength*progress))
-	    text = "\r Percent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
+	    text = "\r Percent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), str(progress*100)[:4], status)
 	    sys.stdout.write(text)
 	    sys.stdout.flush()
 
@@ -528,6 +528,77 @@ class Interpreter:
 	@staticmethod
 	def interpreter(string):
 		UND = False
+
+
+		words = string.split(' ')
+		c = conn.cursor()
+		repeat = []
+		data_tables = ['dict_substantivos','dict_adjetivos','dict_verbos']
+		for word in words:
+			if(word[(len(word) -1):] == '?'):
+				word = str(word[:-1])
+			for table in data_tables:
+				sql = "SELECT vocabulo FROM " + str(table) + " WHERE vocabulo LIKE " + "'%" + str(word) + "%'"
+				c.execute(sql)
+				r = c.fetchall()
+				if(len(r) == 0):
+					if(str(word) in repeat):
+						continue
+					else:
+						#print 'Nao achei na table ' + str(table)
+						try:
+							url = 'http://dicionario-aberto.net/search-json/' + str(word)
+							unknown_word = urllib2.urlopen(url)
+							data= unknown_word.read()
+							#print data
+							json_data = json.loads(data)
+							keyList = json_data.keys()
+							for key in keyList:
+								if(key == 'superEntry'):
+									word_list = json_data[key][0]['sense'][0]
+								else:
+									word_list = json_data[key]['sense']
+									for entry in word_list:
+										classifications = {'adj.':'dict_adjetivos','f.':'dict_substantivos','m.':'dict_substantivos','v.':'dict_verbos','M.':'dict_substantivos','V.':'dict_verbos','F.':'dict_subtantivos','ADJ.':'dict_adjetivos'}
+										word_class = entry['gramGrp']
+										for cl in classifications:
+											if(cl == word_class):
+												word_class = classifications[cl]
+												if(str(table) <> str(word_class)):
+													continue
+											else:
+												continue
+										word_definition = entry['def']
+										word_definition = word_definition.replace('<br/>','\n')
+										word_definition = word_definition.replace('_','')
+										if(table == word_class):
+											
+											talkString = 'Você quer adicionar ' + str(word) + ' para a tabela de ' + str(word_class) + ":" + str(table) + "?"
+											#print data
+											Kass.talk(talkString)
+											opt = raw_input('\n Operador: ')
+											if opt == 'sim' or opt == 'add':
+												sql = "INSERT INTO " + word_class + " VALUES (" + "'" + str(word) + "','NULL','" + word_definition + "')" 
+												if(c.execute(sql)):
+													talkString = 'Adicionei uma nova palavra (' + str(word) + ') para a tabela ' + str(word_class)
+													conn.commit()
+													repeat.append(str(word))
+													Kass.talk(talkString)
+						except urllib2.HTTPError:
+							pass
+						except KeyError:
+							pass
+						except TypeError:
+							pass
+				else:
+					#print 'Achei ' + str(word)
+					continue
+
+
+
+
+
+
 		if(string == ''):
 			Interpreter.question()
 
