@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.2.2'
+	version = '0.2.3'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -56,7 +56,159 @@ class Kass:
 
 
 
+	class Learn:
+		"""This class is responsible for data insertion based on user input."""
 
+		@classmethod
+		def word(self):
+			global words
+			#LEARN WORD FUNCTION
+			c = conn.cursor()
+			repeat = []
+			data_tables = ['dict_substantivos','dict_adjetivos','dict_verbos','DICT_ADV','DICT_LOC']
+			for word in words:
+				if(word[(len(word) -1):] == '?'):
+					word = str(word[:-1])
+				for table in data_tables:
+					sql = "SELECT vocabulo FROM " + str(table) + " WHERE vocabulo=" + "'" + str(word).lower() + "' COLLATE NOCASE"
+					#print sql
+					c.execute(sql)
+					r = c.fetchall()
+					if(len(r) == 0):
+						if(str(word).upper() in repeat):
+							continue
+						if(str(word).lower() in repeat):
+							continue
+						else:
+							#print 'Nao achei ' + str(word) + ' na table ' + str(table)
+							try:
+								url = 'http://dicionario-aberto.net/search-json/' + str(word)
+								
+								unknown_word = urllib2.urlopen(url)
+								
+
+								data= unknown_word.read()
+								allDefs = []
+								#print data
+								json_data = json.loads(data)
+								keyList = json_data.keys()
+								for key in keyList:
+									if(key == 'superEntry'):
+										word_list = json_data[key][0]['sense'][0]
+									else:
+										word_list = json_data[key]['sense']
+										#print word_list[0]
+										for entry in word_list:
+											#print entry[0]						
+											#print str(type(significado))
+											for key in entry:
+												classifications = {u'adj.':'dict_adjetivos',u'f.':'dict_substantivos',u'm.':'dict_substantivos',u'v.':'dict_verbos',u'M.':'dict_substantivos',u'V.':'dict_verbos',u'F.':'dict_subtantivos',u'ADJ.':'dict_adjetivos',u'Loc.':'DICT_LOC',u'LOC.':'DICT_LOC',u'adv.':'DICT_ADV',u'ADV.':'DICT_ADV'}
+												key = str(key)
+												if(key == 'gramGrp'):
+													word_class = entry[key]
+												if(key == 'def'):
+													word_definition = entry[key]
+													word_definition = word_definition.replace('<br/>','\n')
+													word_definition = word_definition.replace('_','')
+													allDefs.append(u' ' + word_definition + u'\n ')
+													for i in allDefs:
+														word_definition+=i
+
+											#print word_class, word_definition
+											
+													
+											for cl in classifications:
+												#print word_class, cl
+												#print str(type(word_class)), str(type(cl))
+												if(cl in word_class):
+													word_class = classifications[cl]
+													
+													if(str(table) <> str(word_class)):
+														continue
+													else:
+														pass
+														#print 'New Match: ' + str(word_class) + ' and table is ' + str(table)
+												else:
+													continue
+											
+											
+											if(table == word_class):
+
+												talkString = 'Você quer adicionar ' + str(word) + ' para a tabela ' + str(word_class) + "?"
+												#print data
+												Kass.talk(talkString)
+												opt = raw_input('\n Operador: ')
+												if opt == 'sim' or opt == 'add':
+													sql = "INSERT INTO " + word_class + " VALUES (" + "'" + str(word) + "','NULL','" + word_definition + "')" 
+													if(c.execute(sql)):
+														talkString = 'Adicionei uma nova palavra (' + str(word) + ') para a tabela ' + str(word_class)
+														conn.commit()
+														repeat.append(str(word))
+														Kass.talk(talkString)
+							except urllib2.HTTPError:
+								#print url
+								#print 'urllib2 error!'
+								pass
+							except KeyError:
+								print 'keyerror error!'
+								pass
+							except TypeError:
+								print 'typeerror error'
+								pass
+					else:
+						#print 'Achei "' + str(word).lower() + '"" na table ' + str(table)
+						continue
+
+	class Interpretation:
+		@classmethod
+		def identifyString(self, string):
+			c= conn.cursor()
+			#identifyString main variables declaration
+			phraseTypes = ['exclamative','imperative','interrogative','declarative']
+			#declaration
+			dict_substantivos = []
+			dict_adjetivos = []
+			dict_verbos = []
+
+
+			dataTable = {'dict_substantivos':dict_substantivos,'dict_adjetivos':dict_adjetivos,'dict_verbos':dict_verbos}
+			dataTable_a = {'dict_substantivos':0,'dict_adjetivos':0,'dict_verbos':0}
+
+			#LOAD ALL WORDS TO MEMORY
+			for table in dataTable:
+
+					sql = "SELECT vocabulo FROM " + str(table)
+					#print sql
+					c.execute(sql)
+					dataTable[table].append(c.fetchall())
+
+
+			words = string.split(' ')
+			last_one = words[(len(words)-1)]
+			if(last_one[(len(last_one)-1):] == "?"):
+				words[(len(words)-1)] = last_one[:-1]
+
+
+			for word in words:
+				for table in dataTable:
+					for voc in dataTable[table]:
+						for each_entry in voc:
+							if(str(word).lower() == each_entry[0]):
+								dataTable_a[table]+=1
+							if(str(word).upper() == each_entry[0]):
+								dataTable_a[table]+=1
+
+			suffix =''
+			for table in dataTable_a:
+				suffix+= '%s %s,' % (str(dataTable_a[table]), str(table[5:]))
+
+			print '\n String Analysis: '
+			print ' "' + str(string) +'"' + ' tem ' + str(suffix)[:-1]
+					
+				
+
+
+		
 	@staticmethod
 	def talk(string):
 		print '\n Kass: ' + str(string)
@@ -397,68 +549,125 @@ class Interpreter:
 		return maior, objectX.lower()
 
 	@staticmethod
-	def act2(action, tString, dataStruct):
+	def act2(action, tString, dataStruct,optimize):
 		c = conn.cursor()
-		banned_tables = ['IMC']
-		num_results = 0
-		str_result = []
-		for table in dataStruct:
-			if(table in banned_tables):
-				pass
-			else:
-				
-				for column in dataStruct[table]:
-					sql = "SELECT * FROM " + str(table) + " WHERE " + str(column) + " LIKE '%" + str(tString) + "%'"
-					#print sql
-					query = c.execute(sql)
-					res = c.fetchall()
-					if len(res) <> 0:
-						for entry in res:
-							single_result = []
-							single_result.append('\n Tabela: ' + str(table))
-							single_result.append(' -----------------------------------')
-							a = 0
-							for data_col in entry:
-								if(data_col <> 'None'):
-									single_result.append(' ' + str(dataStruct[table][a]).upper() + ": " +  str(data_col))
-									a+=1
-							str_result.append(single_result)
-		if(len(str_result) == 0):
-			talkString = 'Nao encontrei nada sobre ' + str(tString) + ' no meu Banco de Dados.\n'
-			Kass.talk(talkString)
-			return
-		else:
-			talkString = 'Encontrei ' + str(len(str_result)) + ' resultados que podem ser do seu interesse. Oque deseja fazer?'
-			Kass.talk(talkString)
-			command = raw_input('\n Operador: ')
-			command = command.lower()
-			commandList = command.split(' ')
-			abortStrings = ['cancelar','abortar','ignorar','sai fora','sair','parar','nao']
-			visualizationStrings = ['ver','visualizar','mostre','mostrar','deixa eu ver','me mostra','mostra','me mostre','visualize','printar','print','ver']
-			abortChance = 0
-			visualizationChance = 0
-			for i in commandList:
-				for a in abortStrings:
-					if(i[0:len(a)] == a):
-						abortChance+=1
-				for a in visualizationStrings:
-					if(i[0:len(a)] == a):
-						visualizationChance +=1
 
-			if(visualizationChance > abortChance):
-				talkOptions_01 = ['Ok. Mostrando resultados...', 'Tudo bem, mostrando resultado #1...','Vou mostrar o primeiro resultado, então.']
-				Kass.talk(talkOptions_01)
-				print '\n'
-				for result in str_result:
-					Kass.clean()
-					print Program.banner
+		if(optimize == None):
+			banned_tables = ['IMC']
+			num_results = 0
+			str_result = []
+			for table in dataStruct:
+				if(table in banned_tables):
+					pass
+				else:
+					
+					for column in dataStruct[table]:
+						sql = "SELECT * FROM " + str(table) + " WHERE " + str(column) + " LIKE '%" + str(tString) + "%'"
+						#print sql
+						query = c.execute(sql)
+						res = c.fetchall()
+						if len(res) <> 0:
+							for entry in res:
+								single_result = []
+								single_result.append('\n Tabela: ' + str(table))
+								single_result.append(' -----------------------------------')
+								a = 0
+								for data_col in entry:
+									if(data_col <> 'None'):
+										single_result.append(' ' + str(dataStruct[table][a]).upper() + ": " +  str(data_col))
+										a+=1
+								str_result.append(single_result)
+			if(len(str_result) == 0):
+				talkString = 'Nao encontrei nada sobre ' + str(tString) + ' no meu Banco de Dados.\n'
+				Kass.talk(talkString)
+				return
+			else:
+				talkString = 'Encontrei ' + str(len(str_result)) + ' resultados que podem ser do seu interesse. Oque deseja fazer?'
+				Kass.talk(talkString)
+				command = raw_input('\n Operador: ')
+				command = command.lower()
+				commandList = command.split(' ')
+				abortStrings = ['cancelar','abortar','ignorar','sai fora','sair','parar','nao']
+				visualizationStrings = ['ver','visualizar','mostre','mostrar','deixa eu ver','me mostra','mostra','me mostre','visualize','printar','print','ver']
+				abortChance = 0
+				visualizationChance = 0
+				for i in commandList:
+					for a in abortStrings:
+						if(i[0:len(a)] == a):
+							abortChance+=1
+					for a in visualizationStrings:
+						if(i[0:len(a)] == a):
+							visualizationChance +=1
+
+				if(visualizationChance > abortChance):
+					talkOptions_01 = ['Ok. Mostrando resultados...', 'Tudo bem, mostrando resultado #1...','Vou mostrar o primeiro resultado, então.']
+					Kass.talk(talkOptions_01)
 					print '\n'
-					for data_row in result:
-						if 'None' in data_row:
-							continue
-						print data_row
+					for result in str_result:
+						Kass.clean()
+						print Program.banner
+						print '\n'
+						for data_row in result:
+							if 'None' in data_row:
+								continue
+							print data_row
+						print '\n'
+						pause = raw_input(" Kass: Pressione uma tecla para o proximo...\n")
+		else:
+			num_results = 0
+			str_result = []
+			for column in dataStruct[optimize]:
+				sql = "SELECT * FROM " + str(optimize) + " WHERE " + str(column) + " LIKE '%" + str(tString) + "%'"
+				#print sql
+				query = c.execute(sql)
+				res = c.fetchall()
+				if len(res) <> 0:
+					for entry in res:
+						single_result = []
+						single_result.append('\n Tabela: ' + str(optimize))
+						single_result.append(' -----------------------------------')
+						a = 0
+						for data_col in entry:
+							if(data_col <> 'None'):
+								single_result.append(' ' + str(dataStruct[optimize][a]).upper() + ": " +  str(data_col))
+								a+=1
+						str_result.append(single_result)
+			if(len(str_result) == 0):
+				Interpreter.act2(action, tString, dataStruct, None)
+				return
+			else:
+				talkString = 'Encontrei ' + str(len(str_result)) + ' resultados que podem ser do seu interesse. Oque deseja fazer?'
+				Kass.talk(talkString)
+				command = raw_input('\n Operador: ')
+				command = command.lower()
+				commandList = command.split(' ')
+				abortStrings = ['cancelar','abortar','ignorar','sai fora','sair','parar','nao']
+				visualizationStrings = ['ver','visualizar','mostre','mostrar','deixa eu ver','me mostra','mostra','me mostre','visualize','printar','print','ver']
+				abortChance = 0
+				visualizationChance = 0
+				for i in commandList:
+					for a in abortStrings:
+						if(i[0:len(a)] == a):
+							abortChance+=1
+					for a in visualizationStrings:
+						if(i[0:len(a)] == a):
+							visualizationChance +=1
+
+				if(visualizationChance > abortChance):
+					talkOptions_01 = ['Ok. Mostrando resultados...', 'Tudo bem, mostrando resultado #1...','Vou mostrar o primeiro resultado, então.']
+					Kass.talk(talkOptions_01)
 					print '\n'
-					pause = raw_input(" Kass: Pressione uma tecla para o proximo...\n")
+					for result in str_result:
+						Kass.clean()
+						print Program.banner
+						print '\n'
+						for data_row in result:
+							if 'None' in data_row:
+								continue
+							print data_row
+						print '\n'
+						if(len(str_result) > 1):
+							pause = raw_input(" Kass: Pressione uma tecla para o proximo...\n")
 
 	@staticmethod
 	def extract(table):
@@ -527,75 +736,33 @@ class Interpreter:
 
 	@staticmethod
 	def interpreter(string):
+		global words
 		UND = False
 
+		columnList = []
+		for column in dataStruct:
+			for data in dataStruct[column]:
+				append = [str(data).upper(),str(data).lower()]
+				for entry in append:
+					dict_entry = {str(column):entry}
+					columnList.append(dict_entry)
 
 		words = string.split(' ')
-		c = conn.cursor()
-		repeat = []
-		data_tables = ['dict_substantivos','dict_adjetivos','dict_verbos']
-		for word in words:
-			if(word[(len(word) -1):] == '?'):
-				word = str(word[:-1])
-			for table in data_tables:
-				sql = "SELECT vocabulo FROM " + str(table) + " WHERE vocabulo LIKE " + "'%" + str(word) + "%'"
-				c.execute(sql)
-				r = c.fetchall()
-				if(len(r) == 0):
-					if(str(word) in repeat):
-						continue
-					else:
-						#print 'Nao achei na table ' + str(table)
-						try:
-							url = 'http://dicionario-aberto.net/search-json/' + str(word)
-							unknown_word = urllib2.urlopen(url)
-							data= unknown_word.read()
-							#print data
-							json_data = json.loads(data)
-							keyList = json_data.keys()
-							for key in keyList:
-								if(key == 'superEntry'):
-									word_list = json_data[key][0]['sense'][0]
-								else:
-									word_list = json_data[key]['sense']
-									for entry in word_list:
-										classifications = {'adj.':'dict_adjetivos','f.':'dict_substantivos','m.':'dict_substantivos','v.':'dict_verbos','M.':'dict_substantivos','V.':'dict_verbos','F.':'dict_subtantivos','ADJ.':'dict_adjetivos'}
-										word_class = entry['gramGrp']
-										for cl in classifications:
-											if(cl == word_class):
-												word_class = classifications[cl]
-												if(str(table) <> str(word_class)):
-													continue
-											else:
-												continue
-										word_definition = entry['def']
-										word_definition = word_definition.replace('<br/>','\n')
-										word_definition = word_definition.replace('_','')
-										if(table == word_class):
-
-											talkString = 'Você quer adicionar ' + str(word) + ' para a tabela de ' + str(word_class) + ":" + str(table) + "?"
-											#print data
-											Kass.talk(talkString)
-											opt = raw_input('\n Operador: ')
-											if opt == 'sim' or opt == 'add':
-												sql = "INSERT INTO " + word_class + " VALUES (" + "'" + str(word) + "','NULL','" + word_definition + "')" 
-												if(c.execute(sql)):
-													talkString = 'Adicionei uma nova palavra (' + str(word) + ') para a tabela ' + str(word_class)
-													conn.commit()
-													repeat.append(str(word))
-													Kass.talk(talkString)
-						except urllib2.HTTPError:
-							pass
-						except KeyError:
-							pass
-						except TypeError:
-							pass
-				else:
-					#print 'Achei ' + str(word)
-					continue
 
 
 
+		optimize = None
+		for ind_word in words:
+			for dictionary in columnList:
+				#print ' var dictionary = ' + str(dictionary)
+				for ind in dictionary:
+					#print ' var ind = ' + str(ind)
+					if(ind_word in dataStruct[ind]):
+						#print str(ind_word) + ' detected in ' + str(ind)
+						optimize = str(ind)
+						break
+						
+		Kass.Learn.word()
 
 
 
@@ -657,11 +824,14 @@ class Interpreter:
 				
 				UND = True
 				def browsing():
-					objList = [Chrome, Firefox, Iexplore]
-					for obj in objList:
-						if(obj.path is not None):
-							obj.start(arg)
-							return 'Abrindo ' + str(arg) + ' no ' + str(obj.name)
+					try:
+						objList = [Chrome, Firefox, Iexplore]
+						for obj in objList:
+							if obj.path is not None:
+								obj.start(arg)
+								return 'Abrindo ' + str(arg) + ' no ' + str(obj.name)
+					except:
+						pass
 				Kass.talk(browsing())
 			else:
 				talkString = 'É necessário informar um URL válida!'
@@ -782,9 +952,9 @@ class Interpreter:
 				result, tString = Interpreter.analyze(string)
 				var = Interpreter.object(string)
 				if(var == ''):
-					Interpreter.act2(result,tString, dataStruct)
+					Interpreter.act2(result,tString, dataStruct,optimize)
 				else:
-					Interpreter.act2(result,var,dataStruct)
+					Interpreter.act2(result,var,dataStruct,optimize)
 
 	@staticmethod
 	def question():
@@ -803,6 +973,7 @@ class Interpreter:
 				Kass.random_answer(talkOptions_05)
 			command = raw_input('\n Operador: ')
 			command = command.lower()
+			Kass.Interpretation.identifyString(command)
 			Interpreter.interpreter(command)
 			pause = raw_input(' Kass: Pressione qualquer tecla para seguir em frente...\n')
 			if(pause <> ""):
@@ -843,7 +1014,7 @@ def init():
 		init_Steps[step]
 		Kass.update_progress(calc)
 		calc = calc+calc
-		time.sleep(1)
+		time.sleep(0.3)
 
 		
 
