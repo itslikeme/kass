@@ -909,9 +909,14 @@ class Interpreter:
 					errorMsg = 'Sem nada para inserir.'
 					Kass.talk(errorMsg)
 
-		if(string[0:len('show')] == 'show'):
+		if(string[0:len('unselect table')] == 'unselect table'):
 			UND = True
 			if(selected_table):
+				selected_table = None
+
+		if(string[0:len('show')] == 'show'):
+			UND = True
+			if(selected_table is not None):
 				c = conn.cursor()
 				sql = 'SELECT * FROM ' + str(selected_table)
 				c.execute(sql)
@@ -1050,10 +1055,10 @@ class Interpreter:
 				Kass.talk(greetingString)
 				First = True
 			else:
-				talkOptions_05 = ['No que posso ajudar?','No que posso servi-lo?','Esqueceu de alguma coisa?','Meu nome e Kass. Vivo para servir.','Você confia em mim, né?']
+				talkOptions_05 = ['No que posso ajudar?','No que posso servi-lo?','Esqueceu de alguma coisa?','Meu nome e Kass. Vivo para servir.','Voce confia em mim, né?','Mais trabalho?','Terminou?','Me pergunte algo.','Nenhum problema detectado. Aguardando ordens...']
 				Kass.random_answer(talkOptions_05)
 
-			if(selected_table <> ''):
+			if(selected_table is not None):
 				print '\n	--SQL Selection--'
 				selected_table = selected_table.upper()
 				try:
@@ -1097,7 +1102,7 @@ def debug():
 def init():
 	global selected_table
 	Kass.clean()
-	selected_table = ''
+	selected_table = None
 	init_TalkString_05 = '[*] Inicializando...'
 	Kass.talk(init_TalkString_05)
 	global conn
