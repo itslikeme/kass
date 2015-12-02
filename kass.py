@@ -10,7 +10,7 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.2.3'
+	version = '0.2.4'
 	banner = '''
 	 _   __              
 	| | / /              
@@ -36,21 +36,21 @@ class Kass:
 	## A value at 1 or bigger represents 100%
 	@staticmethod
 	def update_progress(progress):
-	    barLength = 10 # Modify this to change the length of the progress bar
+	    barLength = 50 # Modify this to change the length of the progress bar
 	    status = ""
 	    if isinstance(progress, int):
 	        progress = float(progress)
 	    if not isinstance(progress, float):
 	        progress = 0
-	        status = "error: progress var must be float\r\n"
+	        status = "Erro: Variavel precisa ser float\r\n"
 	    if progress < 0:
 	        progress = 0
-	        status = "Halt...\r\n"
+	        status = "Pausa.\r\n"
 	    if progress >= 1:
 	        progress = 1
-	        status = "Done...\r\n"
+	        status = " Completo.\r\n"
 	    block = int(round(barLength*progress))
-	    text = "\r Percent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), str(progress*100)[:4], status)
+	    text = "\r [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), str(progress*100)[:4], status)
 	    sys.stdout.write(text)
 	    sys.stdout.flush()
 
@@ -762,7 +762,7 @@ class Interpreter:
 						optimize = str(ind)
 						break
 						
-		Kass.Learn.word()
+		#Kass.Learn.word()
 
 
 
@@ -800,15 +800,38 @@ class Interpreter:
 				Kass.talk(errorString)
 
 		if(string[0:len('import')] == 'import'):
+			c = conn.cursor()
 			UND = True
 			arg = string[len('import '):]
 			if(arg <> ""):
 				if(os.path.isfile(arg)):
 					f = open(arg,'r')
 					lines = f.readlines()
+					lines_lenght = len(lines)
+					talkString = 'Arquivo tem ' + str(lines_lenght) + ' linhas.'
+					Kass.talk(talkString)
+					max_steps = float(len(lines))
+					one_step = float(1)
+					calc = (one_step/max_steps)
+					progress = calc
 					for i in lines:
+
+						Kass.clean()
+						print Program.banner
+						Kass.talk('Inserindo dados...\n')
 						i = i.replace('\n','')
-						Interpreter.interpreter(i)
+						#old code
+						#Interpreter.interpreter(i)
+
+						#newcode
+						sql = "INSERT INTO KNOWLEDGE VALUES (" + "'" + str(i[1:-1]) + "'" + ")" 
+						c.execute(sql)
+						Kass.update_progress(progress)
+						progress+=calc
+					#break line
+					print '\n'
+
+
 				else:
 					talkOptions_10 = ['Não encontrei o arquivo.','Não pude encontrar o arquivo.','Não foi possível encontrar o arquivo.']
 					Kass.random_answer(talkOptions_10)
@@ -849,6 +872,52 @@ class Interpreter:
 			for table in formattedTableList:
 				Interpreter.populate(data,table,'KNOWLEDGE','wisdom')
 			conn.commit()
+
+		if(string[0:len('select table')] == 'select table'):
+			UND = True
+			arg = string[len('select table '):]
+			global selected_table
+			selected_table = str(arg)
+			talkString = str(selected_table) + ' selecionada.'
+
+		if(string[0:len('insert')] == 'insert'):
+			UND = True
+			values = ''
+			if(selected_table):
+				args = string[len('insert '):]
+				if(args <> ''):
+					args = args.split(' ')
+					for arg in args:
+						arg = str(arg).upper()
+						values+= "'" + str(arg) + "'" + ','
+
+					print values
+					values = '(' + str(values[:-1]) + ')'
+					selected_table = str(selected_table).upper()
+					talkString = 'Inserindo ' + str(values) + ' na tabela ' + str(selected_table)
+					Kass.talk(talkString)
+					c = conn.cursor()
+					sql = 'INSERT INTO ' + str(selected_table) + ' VALUES ' + str(values)
+					if(c.execute(sql)):
+						sucessString = 'Dados enviados.'
+						Kass.talk(sucessString)
+						conn.commit()
+					else:
+						errorString = 'Dados nao enviados.'
+						Kass.talk(errorString)
+				else:
+					errorMsg = 'Sem nada para inserir.'
+					Kass.talk(errorMsg)
+
+		if(string[0:len('show')] == 'show'):
+			UND = True
+			if(selected_table):
+				c = conn.cursor()
+				sql = 'SELECT * FROM ' + str(selected_table)
+				c.execute(sql)
+				queryResult = c.fetchall()
+				for entry in queryResult:
+					print entry
 
 
 		if(string == 'imc'):
@@ -960,20 +1029,50 @@ class Interpreter:
 	def question():
 		global First
 		global dataStruct
+		global selected_table
 		dataStruct = Database.Data.structureFetch()
-		
+		greeting = ''
 		while 1:
 			Kass.clean()
 			print Program.banner
+			t = int(time.localtime()[3])
+			
+			if(t < 13):
+				greeting = 'Bom dia'
+			elif(t >= 13 and t < 19):
+				greeting = 'Boa tarde'
+			elif(t >= 19):
+				greeting = 'Boa noite'
+			else:
+				greeting = 'NULL'
 			if(First == False):
-				Kass.talk("Olá! Seja bem-vindo!")
+				greetingString = str(greeting) + '. Seja bem-vindo!'
+				Kass.talk(greetingString)
 				First = True
 			else:
-				talkOptions_05 = ['No que posso ajudar?','No que posso servi-lo?','Esqueceu de alguma coisa?','Meu nome é Kass. Vivo para servir.','Você confia em mim, né?']
+				talkOptions_05 = ['No que posso ajudar?','No que posso servi-lo?','Esqueceu de alguma coisa?','Meu nome e Kass. Vivo para servir.','Você confia em mim, né?']
 				Kass.random_answer(talkOptions_05)
+
+			if(selected_table <> ''):
+				print '\n	--SQL Selection--'
+				selected_table = selected_table.upper()
+				try:
+					columns = dataStruct[selected_table]
+				except:
+					columns = dataStruct[str(selected_table).lower()]
+				str_column = ''
+				for column in columns:
+					str_column += "'" + column + "'" + ','
+
+				str_column = ' (' + str(str_column[:-1]) + ')'
+				print '	Tabela: ' + str(selected_table) + str(str_column)
 			command = raw_input('\n Operador: ')
 			command = command.lower()
-			Kass.Interpretation.identifyString(command)
+			
+			#ENABLE IDENTIFY STRING
+			identify = False
+			if(identify == True):
+				Kass.Interpretation.identifyString(command)
 			Interpreter.interpreter(command)
 			pause = raw_input(' Kass: Pressione qualquer tecla para seguir em frente...\n')
 			if(pause <> ""):
@@ -996,7 +1095,9 @@ def debug():
 
 
 def init():
+	global selected_table
 	Kass.clean()
+	selected_table = ''
 	init_TalkString_05 = '[*] Inicializando...'
 	Kass.talk(init_TalkString_05)
 	global conn
@@ -1008,13 +1109,13 @@ def init():
 	max_steps = float(len(init_Steps))
 	one_step = float(1)
 	calc = (one_step/max_steps)
+	progress = calc
 	for step in init_Steps:
 		Kass.clean()
 		Kass.talk(step)
 		init_Steps[step]
-		Kass.update_progress(calc)
-		calc = calc+calc
-		time.sleep(0.3)
+		Kass.update_progress(progress)
+		progress+= calc
 
 		
 
