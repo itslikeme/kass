@@ -10,14 +10,12 @@ class developer:
 
 class Program:
 	name = 'Kass Data Management'
-	version = '0.2.4'
+	version = '0.2.5'
 	banner = '''
-	 _   __              
-	| | / /              
-	| |/ /  __ _ ___ ___ 
-	|    \ / _` / __/ __|
-	| |\  \ (_| \__ \__ \\
-	\_| \_/\__,_|___/___/
+	 __  ,            
+	( /,/             
+	 /<   __,  (   (  
+	/  \_(_/(_/_)_/_)_
 	_____________________________\n
 	''' +  str(name) + ' v' + str(version)
 	author = 'n3st0r'
@@ -979,6 +977,7 @@ class Interpreter:
 						c.execute(sqlConsole)
 						conn.commit()
 						Kass.talk(str(c.fetchall()))
+				Database.Data.structureFetch()
 			except Exception as e:
 				Kass.talk(e)
 
